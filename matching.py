@@ -6,10 +6,12 @@ CIR_HP = 1
 
 def L_matching(Rs, Rl, f0, tp):
     '''
-    Rs: source resistor
-    Rl: load resistor
-    f0: central frequency(MHz)
-    tp: circuit type
+    Rs: Source resistor
+    Rl: Load resistor
+    f0: Central frequency(MHz)
+    tp: Circuit type
+    
+    return: Q, L, C
     '''
     w0 = (f0 * (10 ** 6)) * (2 * np.pi) 
     if Rl > Rs:
@@ -31,8 +33,37 @@ def L_matching(Rs, Rl, f0, tp):
     else:
         return 0, 0, 0
 
-def pi_matching(Rs, Rl, f0, maxQ):
-    pass
+def pi_matching(Rs, Rl, f0, dsrQ, tp):
+    '''
+    Rs: Source resistor
+    Rl: Load resistor
+    f0: Central frequency(MHz)
+    dsrQ: Desired Q
+    tp: Circuit type
+
+    return Q, 
+    '''
+    if Rs > Rl:
+        Q1 = dsrQ
+        Rint = Rl / (1+Q1**2)
+        Q2 = np.sqrt(Rs/Rint - 1)
+        X2 = Rint * (Q1 + Q2)
+        B1 = Q1/Rl
+        B2 = Q2/Rs
+        if tp == CIR_LP:
+            return 
+        elif tp == CIR_HP:
+            return
+    elif Rs < Rl:
+        Q2 = dsrQ
+        Rint = Rs / (1+Q2**2)
+        Q1 = np.sqrt(Rl/Rint - 1)
+        X2 = Rint * (Q1 + Q2)
+        B1 = Q1 / Rl
+        B3 = Q2 / Rs
+        return
+    else
+        return 0, 0, 0
 
 def T_matching():
     pass
