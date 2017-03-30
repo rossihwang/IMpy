@@ -11,6 +11,8 @@ class IMpyPage(Gtk.Box):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.__label = label
         self.set_border_width(10)
+        self.inputList = [] # Store the input entry objects
+        self.outputList = [] # Store the output entry objects
         
         ### Setting the boxes
         self.leftVBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -49,21 +51,39 @@ class IMpyPage(Gtk.Box):
         self.imgBox = Gtk.Alignment(xalign=0.5, yalign=0.1, xscale=0, yscale=0) 
         self.rightFrame.add(self.imgBox)
 
-    def add_entry(self, label, isInput):
+    def add_param_entry(self, label, isInput):
         '''
         Add entries to left box for parameters input. 
         '''
-        entry = IMpyParaBox(label)
+        pe = IMpyParamEntry(label, isInput) # when input, it's editable
         row = Gtk.ListBoxRow()
-        row.add(entry)
 
         if isInput == True:
+            self.inputList.append(pe)
+            row.add(pe)
             self.inputListBox.add(row)
         else:
+            self.outputList.append(pe)
+            row.add(pe)
             self.outputListBox.add(row)
+
+    def add_combo_box(self, label, comboList):
+        pc = IMpyParamComboBox(label, comboList)
+        row = Gtk.ListBoxRow()
+        self.inputList.append(pc)
+        row.add(pc)
+        self.inputListBox.add(row)
+        print("hello")
     
-    def disp_result(self, ):
-        pass
+    def disp_result(self):
+        labelStr = {'L': ['Q', 'L', 'C'], 
+                    'pi_hp': ['Q', 'L1', 'L2', 'C1'], 
+                    'pi_lp': ['Q', 'L1', 'C1', 'C2'], 
+                    'T_hp': ['Q', 'L1', 'C1', 'C2'], 
+                    'T_lp': ['Q', 'L1', 'L2', 'C1'], 
+                    'TappedCap': ['Q', 'L1', 'C1', 'C2']}
+        if len(self.outputEntryList) > 0:
+            self.outputEntryList[0].set_text("hello")
 
     def disp_img(self, img):
         '''
@@ -78,8 +98,10 @@ class IMpyPage(Gtk.Box):
         '''
         When the confirm button pressed, do the calculation.
         '''
-        print(self.__label)
-        '''
+        inputVal = []
+        for pe in self.inputList:
+            inputVal.append(float(pe.get_text()))
+        print(inputVal)
         if self.__label == "L circuit":
             pass
         elif self.__label == "Pi circuit":
@@ -89,17 +111,45 @@ class IMpyPage(Gtk.Box):
         elif self.__label == "Tapped Cap":
             pass
         else:
-            raise()
-        '''
-class IMpyParaBox(Gtk.Box):
+            pass
+        
+class IMpyParamEntry(Gtk.Box):
     
-    def __init__(self, label):
+    def __init__(self, label, isEditable):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, homogeneous=True, spacing=10)
-        l = Gtk.Label(label)
-        l.set_alignment(0.5, 0) # misc method
-        self.pack_start(l, True, True, 0)
-        e = Gtk.Entry()
-        self.pack_start(e, True, True, 0)
+        self.lb = Gtk.Label(label)
+        self.lb.set_alignment(0.5, 0) # misc method
+        self.pack_start(self.lb, True, True, 0)
+        self.et = Gtk.Entry()
+        self.et.set_editable(isEditable)
+        self.pack_start(self.et, True, True, 0)
+    
+    def set_text(self, string):
+        self.et.set_text(string)
+
+    def get_text(self):
+        return self.et.get_text()
+
+class IMpyParamComboBox(Gtk.Box):
+
+    def __init__(self, label, comboList):
+        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, homogeneous=True, spacing=10)
+        self.lb = Gtk.Label(label)
+        self.lb.set_alignment(0.5, 0)
+        self.pack_start(self.lb, True, True, 0)
+        self.listStore = Gtk.ListStore(str)
+        for i in comboList:
+            self.listStore.append([i])
+        self.combo = Gtk.ComboBox.new_with_model(self.listStore)
+        renderer_text = Gtk.CellRendererText()
+        self.combo.pack_start(renderer_text, True)
+        self.combo.add_attribute(renderer_text, "text", 0)
+        self.pack_start(self.combo, False, True, True)
+
+    def get_text(self):
+        iter = self.combo.get_active_iter()
+        if iter != None:
+            return self.listStore[iter]
 
 class IMpyMainWindow(Gtk.Window):
 
@@ -111,20 +161,32 @@ class IMpyMainWindow(Gtk.Window):
         self.notebook = Gtk.Notebook()
         self.add(self.notebook)
 
+        ### Add page for L
         self.page1 = IMpyPage("L circuit")
+        ### Add default image
         self.page1.disp_img("../lena.jpg")
-        self.page1.add_entry("Rs", True)
-        self.page1.add_entry("Rl", True)
-        self.page1.add_entry("f0(MHz)", True)
-        self.page1.add_entry("Circuit type", True)
+        ### Input Entries
+        self.page1.add_param_entry("Rs", True)
+        self.page1.add_param_entry("Rl", True)
+        self.page1.add_param_entry("f0(MHz)", True)
+        # self.page1.add_param_entry("Circuit type", True)
+        self.page1.add_combo_box("Circuit type", ["high-pass", "low-pass"])
+        ### Output Entries
+        self.page1.add_param_entry("Q", False)
+        self.page1.add_param_entry("L", False)
+        self.page1.add_param_entry("C", False)
         self.notebook.append_page(self.page1, Gtk.Label("L"))
-
+        ###
+        ### Add page for Pi
         self.page2 = IMpyPage("Pi circuit")
-        self.page2.add_entry("Rs", True)
-        self.page2.add_entry("Rl", True)
-        self.page2.add_entry("f0(MHz)", True)
-        self.page2.add_entry("Desired Q", True)
-        self.page2.add_entry("Circuit type", True)
+        ### Add default image
+        ### Input Entries
+        self.page2.add_param_entry("Rs", True)
+        self.page2.add_param_entry("Rl", True)
+        self.page2.add_param_entry("f0(MHz)", True)
+        self.page2.add_param_entry("Desired Q", True)
+        self.page2.add_param_entry("Circuit type", True)
+        ### Output Entries
         self.notebook.append_page(self.page2, Gtk.Label("Pi"))
 
         self.page3 = IMpyPage("T circuit")
