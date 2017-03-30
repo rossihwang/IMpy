@@ -22,21 +22,26 @@ class IMpyPage(Gtk.Box):
         self.pack_start(self.rightFrame, True, True, 0)
 
         ### Setting parameter box and image box
-        self.paraBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        # self.paraBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        # self.leftFrame.add(self.paraBox)
+        self.paraBox = Gtk.ListBox()
+        self.paraBox.set_selection_mode(Gtk.SelectionMode.NONE) # ???
         self.leftFrame.add(self.paraBox)
         self.imgBox = Gtk.Alignment(xalign=0.5, yalign=0.1, xscale=0, yscale=0) 
         self.rightFrame.add(self.imgBox)
 
         self.confirmButton = Gtk.Button("Confirm")
         # self.confirmButton.connect("")
-        self.paraBox.pack_end(self.confirmButton, False, False, 0)
+        # self.paraBox.pack_end(self.confirmButton, False, False, 0)
     
     def add_entry(self, label):
         '''
         Add entries to left box for parameters input. 
         '''
         entry = IMpyParaBox(label)
-        self.paraBox.pack_start(entry, True, True, 0)
+        row = Gtk.ListBoxRow()
+        row.add(entry)
+        self.paraBox.add(row)
 
     def disp_img(self, img):
         '''
@@ -74,9 +79,11 @@ class IMpyMainWindow(Gtk.Window):
         self.page1.disp_img("../lena.jpg")
         self.page1.add_entry("hello")
         self.page1.add_entry("world")
+        self.page1.add_entry("dddddddddddddddddddddddd")
         self.notebook.append_page(self.page1, Gtk.Label("L"))
 
         self.page2 = IMpyPage("Pi circuit")
+        self.page2.add_entry("hhhhllll")
         self.notebook.append_page(self.page2, Gtk.Label("Pi"))
 
         self.page3 = IMpyPage("T circuit")

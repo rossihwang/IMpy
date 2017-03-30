@@ -105,8 +105,22 @@ def T_matching(Rs, Rl, f0, dsrQ, tp):
     else:
         return 0, 0, 0, 0
 
-def tapped_cap_matching():
-    pass
+def tapped_cap_matching(Rs, Rl, f0, dsrQ):
+    '''
+    Rs: Source resistor
+    Rl: Load resistor
+    f0: Central frequency(MHz)
+    bw: Bandwidth(MHz)
+
+    return Q1, L, C1, C2
+    '''
+    w0 = (f0 * (10 ** 6)) * (2 * np.pi)
+    L = Rs / (w0 * dsrQ)
+    Qp = np.sqrt((Rl / Rs) * (1 + dsrQ ** 2) - 1)
+    C2 = Qp / (w0 * Rl)
+    Ceq = (C2 * (1 + Qp ** 2)) / (Qp ** 2)
+    C1 = (Ceq * C2) / (Ceq - C2)
+    return dsrQ, L, C1, C2
 
 class UTTMatching(unittest.TestCase):
     
@@ -182,7 +196,12 @@ class UTTMatching(unittest.TestCase):
         self.assertAlmostEqual(C1, 1.273e-11, delta=1e-13)
 
     def test_tapped_cap(self):
-        pass
+        # cannot ensure the correctness
+        Q, L, C1, C2 = tapped_cap_matching(50, 10, 100, 3)
+        self.assertAlmostEqual(Q, 3, delta=1e-2)
+        self.assertAlmostEqual(L, 2.652e-8, delta=1e-10)
+        self.assertAlmostEqual(C1, 3.183e-10, delta=1e-12)
+        self.assertAlmostEqual(C2, 1.591e-10, delta=1e-12)
 
 if __name__ == "__main__":
     unittest.main()
