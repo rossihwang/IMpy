@@ -1,9 +1,6 @@
 import unittest
 import numpy as np
 
-CIR_LP = 0
-CIR_HP = 1
-
 def L_matching(Rs, Rl, f0, tp):
     '''
     Rs: Source resistor
@@ -18,20 +15,20 @@ def L_matching(Rs, Rl, f0, tp):
         Q = np.sqrt((Rl / Rs) - 1)
         X1 = Rl / Q
         X2 = Rs * Q
-        if tp == CIR_LP:
-            return Q, (X2 / w0), (1 / (X1 * w0))
-        elif tp == CIR_HP:
-            return Q, (X1 / w0), (1 / (X2 * w0))
+        if tp == "low-pass":
+            return [Q, (X2 / w0), (1 / (X1 * w0))]
+        elif tp == "high-pass":
+            return [Q, (X1 / w0), (1 / (X2 * w0))]
     elif Rl < Rs:
         Q = np.sqrt((Rs / Rl) - 1)
         X1 = Q * Rl
         X2 = Rs / Q
-        if tp == CIR_LP:
-            return Q, (X1 / w0), (1 / (X2 * w0))
-        elif tp == CIR_HP:
-            return Q, (X2 / w0), (1 / (X1 * w0))
+        if tp == "low-pass":
+            return [Q, (X1 / w0), (1 / (X2 * w0))]
+        elif tp == "high-pass":
+            return [Q, (X2 / w0), (1 / (X1 * w0))]
     else:
-        return 0, 0, 0
+        return [0, 0, 0]
 
 def pi_matching(Rs, Rl, f0, dsrQ, tp):
     '''
@@ -41,7 +38,7 @@ def pi_matching(Rs, Rl, f0, dsrQ, tp):
     dsrQ: Desired Q
     tp: Circuit type
 
-    high pass, return Q, L1, L2, C1. low pass return Q, L1, C1, C2
+    return Q, L1, L2, C1, C2
     '''
     w0 = (f0 * (10 ** 6)) * (2 * np.pi) 
     if Rs < Rl:
@@ -51,10 +48,10 @@ def pi_matching(Rs, Rl, f0, dsrQ, tp):
         X2 = Rint * (Q1 + Q2)
         B1 = Q1/Rl
         B3 = Q2/Rs
-        if tp == CIR_LP:
-            return dsrQ, (X2 / w0), (B3 / w0), (B1 / w0) 
-        elif tp == CIR_HP:
-            return dsrQ, ((1 / B3) / w0), ((1 / B1) / w0), ((1 / X2) / w0)
+        if tp == "low-pass":
+            return [dsrQ, (X2 / w0), 0, (B3 / w0), (B1 / w0)] 
+        elif tp == "high-pass":
+            return [dsrQ, ((1 / B3) / w0), ((1 / B1) / w0), ((1 / X2) / w0), 0]
     elif Rs > Rl:
         Q2 = dsrQ
         Rint = Rs / (1+Q2**2)
@@ -62,12 +59,12 @@ def pi_matching(Rs, Rl, f0, dsrQ, tp):
         X2 = Rint * (Q1 + Q2)
         B1 = Q1 / Rl
         B3 = Q2 / Rs
-        if tp == CIR_LP:
-            return dsrQ, (X2 / w0), (B3 / w0), (B1 / w0)
-        elif tp == CIR_HP:
-            return dsrQ, ((1 / B3) / w0), ((1 / B1) / w0), ((1 / X2) / w0)
+        if tp == "low-pass":
+            return [dsrQ, (X2 / w0), 0, (B3 / w0), (B1 / w0)]
+        elif tp == "high-pass":
+            return [dsrQ, ((1 / B3) / w0), ((1 / B1) / w0), ((1 / X2) / w0), 0]
     else:
-        return 0, 0, 0, 0
+        return [0, 0, 0, 0, 0]
 
 def T_matching(Rs, Rl, f0, dsrQ, tp):
     '''
@@ -77,7 +74,7 @@ def T_matching(Rs, Rl, f0, dsrQ, tp):
     dsrQ: Desired Q
     tp: Circuit type
 
-    high pass, return Q, L1, C1, C2. low pass, return Q, L1, L2, C1
+    return Q, L1, L2, C1, C2
     '''
     w0 = (f0 * (10 ** 6)) * (2 * np.pi)
     if Rs > Rl:
@@ -87,10 +84,10 @@ def T_matching(Rs, Rl, f0, dsrQ, tp):
         X1 = Q1 * Rl
         B2 = (Q1 + Q2) / Rint
         X3 = Q2 * Rs
-        if tp == CIR_LP:
-            return dsrQ, (X3 / w0), (X1 / w0), (B2 / w0) 
-        elif tp == CIR_HP:
-            return dsrQ, ((1 / B2) / w0), ((1 / X3) / w0), ((1 / X1) / w0)
+        if tp == "low-pass":
+            return [dsrQ, (X3 / w0), (X1 / w0), (B2 / w0), 0] 
+        elif tp == "high-pass":
+            return [dsrQ, ((1 / B2) / w0), 0, ((1 / X3) / w0), ((1 / X1) / w0)]
     elif Rs < Rl:
         Q2 = dsrQ
         Rint = Rs * (1 + Q2**2)
@@ -98,12 +95,12 @@ def T_matching(Rs, Rl, f0, dsrQ, tp):
         X1 = Q1 * Rl
         B2 = (Q1 + Q2) / Rint
         X3 = Q2 * Rs
-        if tp == CIR_LP:
-            return dsrQ, (X3 / w0), (X1 / w0), (B2 / w0) 
-        elif tp == CIR_HP:
-            return dsrQ, ((1 / B2) / w0), ((1 / X3) / w0), ((1 / X1) / w0)
+        if tp == "low-pass":
+            return [dsrQ, (X3 / w0), (X1 / w0), (B2 / w0), 0] 
+        elif tp == "high-pass":
+            return [dsrQ, ((1 / B2) / w0), 0, ((1 / X3) / w0), ((1 / X1) / w0)]
     else:
-        return 0, 0, 0, 0
+        return [0, 0, 0, 0]
 
 def tapped_cap_matching(Rs, Rl, f0, dsrQ):
     '''
@@ -120,76 +117,76 @@ def tapped_cap_matching(Rs, Rl, f0, dsrQ):
     C2 = Qp / (w0 * Rl)
     Ceq = (C2 * (1 + Qp ** 2)) / (Qp ** 2)
     C1 = (Ceq * C2) / (Ceq - C2)
-    return dsrQ, L, C1, C2
+    return [dsrQ, L, C1, C2]
 
 class UTTMatching(unittest.TestCase):
     
     def test_L(self):
-        Q, L, C = L_matching(50, 250, 900, CIR_LP)
+        Q, L, C = L_matching(50, 250, 900, "low-pass")
         self.assertTrue(np.abs(Q - 2) < 1e-1)
         self.assertTrue(np.abs(L - 17.684e-9) < 1e-11)
         self.assertTrue(np.abs(C - 1.415e-12) < 1e-14)
 
-        Q, L, C = L_matching(50, 250, 900, CIR_HP)
+        Q, L, C = L_matching(50, 250, 900, "high-pass")
         self.assertTrue(np.abs(Q - 2) < 1e-1)
         self.assertTrue(np.abs(L - 22.105e-9) < 1e-11)
         self.assertTrue(np.abs(C - 1.768e-12) < 1e-14)
     
-        Q, L, C = L_matching(250, 100, 500, CIR_LP)
+        Q, L, C = L_matching(250, 100, 500, "low-pass")
         self.assertTrue(np.abs(Q - 1.22) < 1e-1)
         self.assertTrue(np.abs(L - 38.985e-9) < 1e-11)
         self.assertTrue(np.abs(C - 1.559e-12) < 1e-14)
 
-        Q, L, C = L_matching(250, 100, 500, CIR_HP)
+        Q, L, C = L_matching(250, 100, 500, "high-pass")
         self.assertTrue(np.abs(Q - 1.22) < 1e-1)
         self.assertTrue(np.abs(L - 64.975e-9) < 1e-11)
         self.assertTrue(np.abs(C - 2.599e-12) < 1e-14)
 
     def test_Pi(self):
-        Q, L1, L2, C1 = pi_matching(50, 250, 100, 3, CIR_HP)
+        Q, L1, L2, C1, C2 = pi_matching(50, 250, 100, 3, "high-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 7.957e-8, delta=1e-10)
         self.assertAlmostEqual(L2, 1.326e-7, delta=1e-9)
         self.assertAlmostEqual(C1, 1.591e-11, delta=1e-13)
 
-        Q, L1, C1, C2 = pi_matching(50, 250, 100, 3, CIR_LP)
+        Q, L1, L2, C1, C2 = pi_matching(50, 250, 100, 3, "low-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 1.591e-7, delta=1e-9)
         self.assertAlmostEqual(C1, 3.183e-11, delta=1e-13)
         self.assertAlmostEqual(C2, 1.909e-11, delta=1e-13)
         
-        Q, L1, L2, C1 = pi_matching(250, 50, 100, 3, CIR_HP)
+        Q, L1, L2, C1, C2 = pi_matching(250, 50, 100, 3, "high-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 1.326e-7, delta=1e-9)
         self.assertAlmostEqual(L2, 7.957e-8, delta=1e-10)
         self.assertAlmostEqual(C1, 1.591e-11, delta=1e-13)
 
-        Q, L1, C1, C2 = pi_matching(250, 50, 100, 3, CIR_LP)
+        Q, L1, L2, C1, C2 = pi_matching(250, 50, 100, 3, "low-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 1.591e-7, delta=1e-9)
         self.assertAlmostEqual(C1, 1.909e-11, delta=1e-13)
         self.assertAlmostEqual(C2, 3.183e-11, delta=1e-13)
         
     def test_T(self):
-        Q, L1, C1, C2 = T_matching(50, 250, 100, 3, CIR_HP)
+        Q, L1, L2, C1, C2 = T_matching(50, 250, 100, 3, "high-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 1.989e-7, delta=1e-9)
         self.assertAlmostEqual(C1, 1.061e-11, delta=1e-13)
         self.assertAlmostEqual(C2, 6.366e-12, delta=1e-14)
 
-        Q, L1, L2, C1 = T_matching(50, 250, 100, 3, CIR_LP)
+        Q, L1, L2, C1, C2 = T_matching(50, 250, 100, 3, "low-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 2.387e-7, delta=1e-9)
         self.assertAlmostEqual(L2, 3.978e-7, delta=1e-9)
         self.assertAlmostEqual(C1, 1.273e-11, delta=1e-13)
         
-        Q, L1, C1, C2 = T_matching(250, 50, 100, 3, CIR_HP)
+        Q, L1, L2, C1, C2 = T_matching(250, 50, 100, 3, "high-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 1.989e-7, delta=1e-9)
         self.assertAlmostEqual(C1, 6.366e-12, delta=1e-14)
         self.assertAlmostEqual(C2, 1.061e-11, delta=1e-13)
 
-        Q, L1, L2, C1 = T_matching(250, 50, 100, 3, CIR_LP)
+        Q, L1, L2, C1, C2 = T_matching(250, 50, 100, 3, "low-pass")
         self.assertAlmostEqual(Q, 3, delta=1e-2)
         self.assertAlmostEqual(L1, 3.978e-7, delta=1e-9)
         self.assertAlmostEqual(L2, 2.387e-7, delta=1e-9)
