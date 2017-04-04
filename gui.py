@@ -7,7 +7,7 @@ VER = 0.5
 
 class IMpyPage(Gtk.Box):
 
-    def __init__(self, label):
+    def __init__(self, label, window):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.__label = label
         self.set_border_width(10)
@@ -15,6 +15,7 @@ class IMpyPage(Gtk.Box):
         self.outputList = [] # Store the output entry objects
         self.lastCircuitType = None
         self.circuitImg = Gtk.Image()
+        self.win = window
         
         ### Setting the vertical boxes on the right and left
         self.leftVBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -42,10 +43,13 @@ class IMpyPage(Gtk.Box):
         ### Setting input box
         self.topLeftBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.inputListBox = Gtk.ListBox()
+        self.clearButton = Gtk.Button("Clear")
+        self.clearButton.connect("clicked", self.on_clear_button)
         self.confirmButton = Gtk.Button("Confirm")
         self.confirmButton.connect("clicked", self.on_confirm_button)
         self.topLeftFrame.add(self.topLeftBox)
         self.topLeftBox.pack_start(self.inputListBox, True, True, 0)
+        self.topLeftBox.pack_start(self.clearButton, False, True, 0)
         self.topLeftBox.pack_start(self.confirmButton, False, True, 0)
 
         ## Setting the output box
@@ -108,32 +112,49 @@ class IMpyPage(Gtk.Box):
     def on_confirm_button(self, button):
         '''
         When the confirm button pressed, do the calculation.
-        This is not a good oo design!!!
+        This is not a good OO design!!!
         '''
         inputVal = []
         for pe in self.inputList:
             v = pe.get_entry_text() if isinstance(pe, IMpyParamEntry) else pe.get_combo_text()
             inputVal.append(v)
+        try:
+            if self.__label == "L":
+                Rs, Rl, f0, tp = inputVal
+                result = matching.L_matching(float(Rs), float(Rl), float(f0), tp)
+                self.disp_result(result, tp=tp)
+            elif self.__label == "pi":
+                Rs, Rl, f0, dsrQ, tp = inputVal
+                result = matching.pi_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
+                self.disp_result(result, tp=tp)
+            elif self.__label == "T":
+                Rs, Rl, f0, dsrQ, tp = inputVal
+                result = matching.T_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
+                self.disp_result(result, tp=tp)
+            elif self.__label == "TappedCap":
+                Rs, Rl, f0, dsrQ = inputVal
+                result = matching.tapped_cap_matching(float(Rs), float(Rl), float(f0), float(dsrQ))
+                self.disp_result(result, tp=None)
+            else:
+                pass
+        except ValueError: # there may be two kinds of exception here, empty input or string input
+            self.throw_warning("Invalid Input", "The input should be numbers!")
+    
+    def on_clear_button(self, button):
+        for i in self.inputList:
+            i.reset()
 
-        if self.__label == "L":
-            Rs, Rl, f0, tp = inputVal
-            result = matching.L_matching(float(Rs), float(Rl), float(f0), tp)
-            self.disp_result(result, tp=tp)
-        elif self.__label == "pi":
-            Rs, Rl, f0, dsrQ, tp = inputVal
-            result = matching.pi_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
-            self.disp_result(result, tp=tp)
-        elif self.__label == "T":
-            Rs, Rl, f0, dsrQ, tp = inputVal
-            result = matching.T_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
-            self.disp_result(result, tp=tp)
-        elif self.__label == "TappedCap":
-            Rs, Rl, f0, dsrQ = inputVal
-            result = matching.tapped_cap_matching(float(Rs), float(Rl), float(f0), float(dsrQ))
-            self.disp_result(result, tp=None)
-        else:
-            pass
-
+    def throw_warning(self, mesg, secMesg):
+        if self.win != None:
+            dialog = Gtk.MessageDialog(self.win, 0, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK_CANCEL, mesg)
+            dialog.format_secondary_text(secMesg)
+            response = dialog.run()
+            if response == Gtk.ResponseType.OK:
+                pass
+            elif response == Gtk.ResponseType.CANCEL:
+                pass
+            dialog.destroy()
+    
 class IMpyParamBox(Gtk.Box):
     
     def __init__(self, labelStr):
@@ -160,6 +181,9 @@ class IMpyParamEntry(IMpyParamBox):
     def get_entry_text(self):
         return self.entry.get_text()
 
+    def reset(self):
+        self.entry.set_text('')
+
 class IMpyParamComboBox(IMpyParamBox):
 
     def __init__(self, labelStr, comboList):
@@ -179,6 +203,9 @@ class IMpyParamComboBox(IMpyParamBox):
         if idx != None:
             model = self.combo.get_model()
             return model[idx][0]
+    
+    def reset(self):
+        self.combo.set_active(0)
 
 class IMpyMainWindow(Gtk.Window):
 
@@ -190,8 +217,9 @@ class IMpyMainWindow(Gtk.Window):
         self.notebook = Gtk.Notebook()
         self.add(self.notebook)
 
+        window = self
         ### Add page for L
-        self.page1 = IMpyPage("L")
+        self.page1 = IMpyPage("L", window)
         ### Add default image
         self.page1.disp_circuit_img("./img/L_low-pass.png")
         ### Input Entries
@@ -207,7 +235,7 @@ class IMpyMainWindow(Gtk.Window):
         ###
 
         ### Add page for Pi
-        self.page2 = IMpyPage("pi")
+        self.page2 = IMpyPage("pi", window)
         ### Add default image
         self.page2.disp_circuit_img("./img/pi_low-pass.png")
         ### Input Entries
@@ -226,7 +254,7 @@ class IMpyMainWindow(Gtk.Window):
         ###
 
         ### Add page for T
-        self.page3 = IMpyPage("T")
+        self.page3 = IMpyPage("T", window)
         ### Add default image
         self.page3.disp_circuit_img("./img/T_low-pass.png")
         ### Input Entries
@@ -245,7 +273,7 @@ class IMpyMainWindow(Gtk.Window):
         ###
 
         ### Add page for TappedCap
-        self.page4 = IMpyPage("TappedCap")
+        self.page4 = IMpyPage("TappedCap", window)
         ### Add default image
         self.page4.disp_circuit_img("./img/TappedCap.png")
         ### Input Entries
