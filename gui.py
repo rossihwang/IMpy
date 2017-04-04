@@ -3,7 +3,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 import matching
 
-VER = 0.3
+VER = 0.5
 
 class IMpyPage(Gtk.Box):
 
@@ -14,9 +14,9 @@ class IMpyPage(Gtk.Box):
         self.inputList = [] # Store the input entry objects
         self.outputList = [] # Store the output entry objects
         self.lastCircuitType = None
-        self.lastImg = None
+        self.circuitImg = Gtk.Image()
         
-        ### Setting the boxes
+        ### Setting the vertical boxes on the right and left
         self.leftVBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.rightVBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.pack_start(self.leftVBox, True, True, 0)
@@ -32,8 +32,9 @@ class IMpyPage(Gtk.Box):
         self.bottomLeftFrame.set_label_align(0.5, 0.5)
 
         self.rightFrame = Gtk.Frame()
-        self.rightFrame.set_label("Image")
+        self.rightFrame.set_label("Circuit")
         self.rightFrame.set_label_align(0.5, 0.5)
+
         self.leftVBox.pack_start(self.topLeftFrame, True, True, 0)
         self.leftVBox.pack_start(self.bottomLeftFrame, True, True, 0)
         self.rightVBox.pack_start(self.rightFrame, True, True, 0)
@@ -46,18 +47,21 @@ class IMpyPage(Gtk.Box):
         self.topLeftFrame.add(self.topLeftBox)
         self.topLeftBox.pack_start(self.inputListBox, True, True, 0)
         self.topLeftBox.pack_start(self.confirmButton, False, True, 0)
+
         ## Setting the output box
         self.outputListBox = Gtk.ListBox()
         self.bottomLeftFrame.add(self.outputListBox)
+
         ## Setting the image box
         self.imgBox = Gtk.Alignment(xalign=0.5, yalign=0.1, xscale=0, yscale=0) 
+        self.imgBox.add(self.circuitImg)
         self.rightFrame.add(self.imgBox)
-
+        
     def add_param_entry(self, label, isInput):
         '''
         Add entries to left box for parameters input. 
         '''
-        pe = IMpyParamEntry(label, isInput) # when input, it's editable
+        pe = IMpyParamEntry(label, isInput) # when its input, its editable
         row = Gtk.ListBoxRow()
 
         if isInput == True:
@@ -89,25 +93,22 @@ class IMpyPage(Gtk.Box):
             print("length of result is " + str(len(result)))
             print("length of outputList is " + str(len(self.outputList)))
         ### Update Circuit image
-        self.disp_img("./img/{0}_{1}.png".format(self.__label, tp))
+        tp = '_'+tp if tp != None else ''
+        self.disp_circuit_img("./img/{0}{1}.png".format(self.__label, tp))
 
-    def disp_img(self, img):
+    def disp_circuit_img(self, img):
         '''
         Display the image on the right box.
         '''
-        if self.lastImg == None:
-            self.lastImg = Gtk.Image()
-            self.lastImg.set_from_file(img)
-            self.imgBox.add(self.lastImg)
-        else:
-            self.lastImg.set_from_file(img)
-    
+        self.circuitImg.set_from_file(img)
+            
     def sim_result(self, *result, tp):
         pass
 
     def on_confirm_button(self, button):
         '''
         When the confirm button pressed, do the calculation.
+        This is not a good oo design!!!
         '''
         inputVal = []
         for pe in self.inputList:
@@ -123,9 +124,13 @@ class IMpyPage(Gtk.Box):
             result = matching.pi_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
             self.disp_result(result, tp=tp)
         elif self.__label == "T":
-            pass
+            Rs, Rl, f0, dsrQ, tp = inputVal
+            result = matching.T_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
+            self.disp_result(result, tp=tp)
         elif self.__label == "TappedCap":
-            pass
+            Rs, Rl, f0, dsrQ = inputVal
+            result = matching.tapped_cap_matching(float(Rs), float(Rl), float(f0), float(dsrQ))
+            self.disp_result(result, tp=None)
         else:
             pass
 
@@ -178,7 +183,7 @@ class IMpyParamComboBox(IMpyParamBox):
 class IMpyMainWindow(Gtk.Window):
 
     def __init__(self):
-        super().__init__(title="IMpy(ver." + str(VER)+')')
+        super().__init__(title="IMpy ver." + str(VER)+ " by rossihwang")
         self.set_default_size(800, 600)
         self.set_border_width(5)
         
@@ -188,7 +193,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for L
         self.page1 = IMpyPage("L")
         ### Add default image
-        self.page1.disp_img("./img/L_low-pass.png")
+        self.page1.disp_circuit_img("./img/L_low-pass.png")
         ### Input Entries
         self.page1.add_param_entry("Rs", True)
         self.page1.add_param_entry("Rl", True)
@@ -204,7 +209,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for Pi
         self.page2 = IMpyPage("pi")
         ### Add default image
-        self.page2.disp_img("./img/pi_low-pass.png")
+        self.page2.disp_circuit_img("./img/pi_low-pass.png")
         ### Input Entries
         self.page2.add_param_entry("Rs", True)
         self.page2.add_param_entry("Rl", True)
@@ -223,7 +228,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for T
         self.page3 = IMpyPage("T")
         ### Add default image
-        self.page3.disp_img("./img/T_low-pass.png")
+        self.page3.disp_circuit_img("./img/T_low-pass.png")
         ### Input Entries
         self.page3.add_param_entry("Rs", True)
         self.page3.add_param_entry("Rl", True)
@@ -242,7 +247,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for TappedCap
         self.page4 = IMpyPage("TappedCap")
         ### Add default image
-        self.page4.disp_img("./img/TappedCap.png")
+        self.page4.disp_circuit_img("./img/TappedCap.png")
         ### Input Entries
         self.page4.add_param_entry("Rs", True)
         self.page4.add_param_entry("Rl", True)
@@ -256,8 +261,14 @@ class IMpyMainWindow(Gtk.Window):
         self.notebook.append_page(self.page4, Gtk.Label("Tapped Cap"))
         ###
 
+        ### Add about page
+        self.page5 = Gtk.Box()
+        lb = Gtk.Label()
+        lb.set_markup("<a href=\"https://github.com/rossihwang/IMpy\"title=\"Click to find out more\">The Project Page</a>")
+        lb.set_line_wrap(True)
+        lb.set_alignment(xalign=0.0, yalign=0.0)
+        self.page5.pack_start(lb, False, False, 0)
+        self.notebook.append_page(self.page5, Gtk.Label("About"))
+
 if __name__ == "__main__":
-    win = IMpyMainWindow()
-    win.connect("delete-event", Gtk.main_quit)
-    win.show_all()
-    Gtk.main()
+    pass
