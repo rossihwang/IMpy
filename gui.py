@@ -2,6 +2,10 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 import matching
+import sim
+
+from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo as FigureCanvas
+import matplotlib.pyplot as plt
 
 VER = 0.5
 
@@ -16,6 +20,9 @@ class IMpyPage(Gtk.Box):
         self.lastCircuitType = None
         self.circuitImg = Gtk.Image()
         self.win = window
+        
+        self.sim = sim.Simulator("L")
+        self.simCanv = FigureCanvas(self.sim.figure)
         
         ### Setting the vertical boxes on the right and left
         self.leftVBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -32,13 +39,18 @@ class IMpyPage(Gtk.Box):
         self.bottomLeftFrame.set_label("Output")
         self.bottomLeftFrame.set_label_align(0.5, 0.5)
 
-        self.rightFrame = Gtk.Frame()
-        self.rightFrame.set_label("Circuit")
-        self.rightFrame.set_label_align(0.5, 0.5)
+        self.topRightFrame = Gtk.Frame()
+        self.topRightFrame.set_label("Circuit")
+        self.topRightFrame.set_label_align(0.5, 0.5)
+
+        self.bottomRightFrame = Gtk.Frame()
+        self.bottomRightFrame.set_label("Sim")
+        self.bottomRightFrame.set_label_align(0.5, 0.5)
 
         self.leftVBox.pack_start(self.topLeftFrame, True, True, 0)
         self.leftVBox.pack_start(self.bottomLeftFrame, True, True, 0)
-        self.rightVBox.pack_start(self.rightFrame, True, True, 0)
+        self.rightVBox.pack_start(self.topRightFrame, True, True, 0)
+        self.rightVBox.pack_start(self.bottomRightFrame, True, True, 0)
 
         ### Setting input box
         self.topLeftBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -56,10 +68,12 @@ class IMpyPage(Gtk.Box):
         self.outputListBox = Gtk.ListBox()
         self.bottomLeftFrame.add(self.outputListBox)
 
-        ## Setting the image box
+        ## Setting the circuit image box
         self.imgBox = Gtk.Alignment(xalign=0.5, yalign=0.1, xscale=0, yscale=0) 
         self.imgBox.add(self.circuitImg)
-        self.rightFrame.add(self.imgBox)
+        self.topRightFrame.add(self.imgBox)
+        ## Setting simulation image 
+        self.bottomRightFrame.add(self.simCanv)
         
     def add_param_entry(self, label, isInput):
         '''
@@ -106,7 +120,8 @@ class IMpyPage(Gtk.Box):
         '''
         self.circuitImg.set_from_file(img)
             
-    def sim_result(self, *result, tp):
+    def disp_sim_result(self, *result, tp):
+        # self.simFig.canvas.draw()
         pass
 
     def on_confirm_button(self, button):
@@ -123,18 +138,30 @@ class IMpyPage(Gtk.Box):
                 Rs, Rl, f0, tp = inputVal
                 result = matching.L_matching(float(Rs), float(Rl), float(f0), tp)
                 self.disp_result(result, tp=tp)
+                Q, L, C = result
+                self.sim.L_sim(float(Rs), float(Rl), float(f0), float(L), float(C), tp)
+                self.sim.update_figure()
             elif self.__label == "pi":
                 Rs, Rl, f0, dsrQ, tp = inputVal
                 result = matching.pi_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
                 self.disp_result(result, tp=tp)
+                Q, L1, L2, C1, C2 = result
+                self.sim.pi_sim(float(Rs), float(Rl), float(f0), float(L1), float(L2), float(C1), float(C2), tp)
+                self.sim.update_figure()
             elif self.__label == "T":
                 Rs, Rl, f0, dsrQ, tp = inputVal
                 result = matching.T_matching(float(Rs), float(Rl), float(f0), float(dsrQ), tp)
                 self.disp_result(result, tp=tp)
+                Q, L1, L2, C1, C2 = result
+                self.sim.T_sim(float(Rs), float(Rl), float(f0), float(L1), float(L2), float(C1), float(C2), tp)
+                self.sim.update_figure()
             elif self.__label == "TappedCap":
                 Rs, Rl, f0, dsrQ = inputVal
                 result = matching.tapped_cap_matching(float(Rs), float(Rl), float(f0), float(dsrQ))
                 self.disp_result(result, tp=None)
+                Q, L, C1, C2 = result
+                self.sim.tapped_cap_sim(float(Rs), float(Rl), float(f0), float(L), float(C1), float(C2))
+                self.sim.update_figure()
             else:
                 pass
         except ValueError: # there may be two kinds of exception here, empty input or string input
@@ -210,7 +237,7 @@ class IMpyParamComboBox(IMpyParamBox):
 class IMpyMainWindow(Gtk.Window):
 
     def __init__(self):
-        super().__init__(title="IMpy ver." + str(VER)+ " by rossihwang")
+        super().__init__(title="IMpy ver " + str(VER)+ " by rossihwang")
         self.set_default_size(800, 600)
         self.set_border_width(5)
         
@@ -221,7 +248,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for L
         self.page1 = IMpyPage("L", window)
         ### Add default image
-        self.page1.disp_circuit_img("./img/L_low-pass.png")
+        # self.page1.disp_circuit_img("./img/L_low-pass.png")
         ### Input Entries
         self.page1.add_param_entry("Rs", True)
         self.page1.add_param_entry("Rl", True)
@@ -237,7 +264,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for Pi
         self.page2 = IMpyPage("pi", window)
         ### Add default image
-        self.page2.disp_circuit_img("./img/pi_low-pass.png")
+        # self.page2.disp_circuit_img("./img/pi_low-pass.png")
         ### Input Entries
         self.page2.add_param_entry("Rs", True)
         self.page2.add_param_entry("Rl", True)
@@ -256,7 +283,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for T
         self.page3 = IMpyPage("T", window)
         ### Add default image
-        self.page3.disp_circuit_img("./img/T_low-pass.png")
+        # self.page3.disp_circuit_img("./img/T_low-pass.png")
         ### Input Entries
         self.page3.add_param_entry("Rs", True)
         self.page3.add_param_entry("Rl", True)
@@ -275,7 +302,7 @@ class IMpyMainWindow(Gtk.Window):
         ### Add page for TappedCap
         self.page4 = IMpyPage("TappedCap", window)
         ### Add default image
-        self.page4.disp_circuit_img("./img/TappedCap.png")
+        # self.page4.disp_circuit_img("./img/TappedCap.png")
         ### Input Entries
         self.page4.add_param_entry("Rs", True)
         self.page4.add_param_entry("Rl", True)
