@@ -44,7 +44,7 @@ class IMpyPage(Gtk.Box):
         self.topRightFrame.set_label_align(0.5, 0.5)
 
         self.bottomRightFrame = Gtk.Frame()
-        self.bottomRightFrame.set_label("Sim")
+        self.bottomRightFrame.set_label("Input Impedance")
         self.bottomRightFrame.set_label_align(0.5, 0.5)
 
         self.leftVBox.pack_start(self.topLeftFrame, True, True, 0)
@@ -112,6 +112,7 @@ class IMpyPage(Gtk.Box):
             print("length of outputList is " + str(len(self.outputList)))
         ### Update Circuit image
         tp = '_'+tp if tp != None else ''
+        print(tp)
         self.disp_circuit_img("./img/{0}{1}.png".format(self.__label, tp))
 
     def disp_circuit_img(self, img):
@@ -136,8 +137,11 @@ class IMpyPage(Gtk.Box):
         try:
             if self.__label == "L":
                 Rs, Rl, f0, tp = inputVal
-                result = matching.L_matching(float(Rs), float(Rl), float(f0), tp)
-                self.disp_result(result, tp=tp)
+                result, tp = matching.L_matching(float(Rs), float(Rl), float(f0), tp)
+                # type is a bit complicate for L matching
+                print(result)
+                print(tp)
+                self.disp_result(result, tp=tp) 
                 Q, L, C = result
                 self.sim.L_sim(float(Rs), float(Rl), float(f0), float(L), float(C), tp)
                 self.sim.update_figure()
@@ -164,7 +168,8 @@ class IMpyPage(Gtk.Box):
                 self.sim.update_figure()
             else:
                 pass
-        except ValueError: # there may be two kinds of exception here, empty input or string input
+        except ValueError as e: # there may be two kinds of exception here, empty input or string input
+            print(e)
             self.throw_warning("Invalid Input", "The input should be numbers!")
     
     def on_clear_button(self, button):
