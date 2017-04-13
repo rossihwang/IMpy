@@ -9,30 +9,6 @@ from gi.repository import Gtk
 
 import numpy as np
 
-# cir = Circuit("L mathing circuit")
-# cir.add_vsource("V1", "n1", cir.gnd, dc_value=0., ac_value=1.)
-# cir.add_resistor("Rs", "n1", "n2", 50.)
-# cir.add_inductor("L", "n2", "n3", 3.18e-07)
-# cir.add_capacitor("C", "n3", cir.gnd, 2.55e-11)
-# cir.add_resistor("Rl", "n3", cir.gnd, 250.)
-
-# ac1 = new_ac(100, 100e+6, 1e2, x0=None)
-
-# res = run(cir, ac1)
-
-# figure = plt.figure()
-# ax = plt.subplot(111)
-# ax.set_xscale("log", nonposx="clip")
-# plt.plot(res["ac"]["f"], (res["ac"]["Vn2"]/res["ac"]["I(L)"]).real)
-
-# canvas = FigureCanvas(figure)
-# win = Gtk.Window()
-# win.add(canvas)
-# win.connect("delete-event", Gtk.main_quit)
-# win.show_all()
-# Gtk.main()
-
-
 class Simulator():
 
     def __init__(self, simType):
@@ -69,26 +45,26 @@ class Simulator():
         cir.add_inductor("L", "n2", cir.gnd, L)
         cir.add_resistor("Rl", "n2", cir.gnd, Rl)
 
-        # # AC analysis
-        # ac = new_ac(f0-100, f0+100, 100, x0=None)
-        # res = run(cir, ac)
+        # AC analysis
+        ac = new_ac(f0-100, f0+100, 100, x0=None)
+        res = run(cir, ac)
 
-        # self.simAx.clear()
-        # idx = self.index_of_freq0(res["ac"]["f"], f0)
-        # xy = res["ac"]["f"][idx], res["ac"]["Vn1"][idx].real
-        # self.simAx.annotate("(%s, %s)" % xy, xy=xy, textcoords="data")
-        # self.simAx.plot(res["ac"]["f"], res["ac"]["Vn1"].real)
-        # self.simAx.plot(xy[0], xy[1], "bo")
-        # self.simFig.tight_layout()
-        self.__run_sim(cir, f0)
+        self.simAx.clear()
+        idx = self.index_of_freq0(res["ac"]["f"], f0)
+        xy = res["ac"]["f"][idx], res["ac"]["Vn1"][idx].real
+        self.simAx.annotate("(%s, %s)" % xy, xy=xy, textcoords="data")
+        self.simAx.plot(res["ac"]["f"], res["ac"]["Vn1"].real)
+        self.simAx.plot(xy[0], xy[1], "bo")
+        self.simFig.tight_layout()
+        # self.__run_sim(cir, f0)
 
     def pi_sim(self, Rs, Rl, f0, L1, L2, C1, C2, tp):
         # Descript the circuit
         cir = Circuit("pi matching")
-        # cir.add_isource("I1", cir.gnd, "n1", dc_value=0, ac_value=1)
-        # cir.add_resistor("Rs", "n1", cir.gnd, Rs)
-        cir.add_vsource("V1", "n0", cir.gnd, dc_value=0, ac_value=Rs)
-        cir.add_resistor("Rs", "n0", "n1", Rs)
+        cir.add_isource("I1", cir.gnd, "n1", dc_value=0, ac_value=1)
+        cir.add_resistor("Rs", "n1", cir.gnd, Rs)
+        # cir.add_vsource("V1", "n0", cir.gnd, dc_value=0, ac_value=Rs)
+        # cir.add_resistor("Rs", "n0", "n1", Rs)
         if tp == "low-pass":
             cir.add_inductor("L1", "n1", "n2", L1)
             cir.add_capacitor("C1", "n1", cir.gnd, C1)
@@ -122,6 +98,8 @@ class Simulator():
         cir = Circuit("Tapped cap matching")
         cir.add_isource("I1", cir.gnd, "n1", dc_value=0, ac_value=1)
         cir.add_resistor("Rs", "n1", cir.gnd, Rs)
+        # cir.add_vsource("V1", "n0", cir.gnd, dc_value=0, ac_value=Rs)
+        # cir.add_resistor("Rs", "n0", "n1", Rs)
         cir.add_inductor("L", "n1", cir.gnd, L)
         cir.add_capacitor("C1", "n1", "n2", C1)
         cir.add_capacitor("C2", "n2", cir.gnd, C2)

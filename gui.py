@@ -107,12 +107,13 @@ class IMpyPage(Gtk.Box):
             for i in range(len(result[0])):
                 self.outputList[i].set_entry_text("{0:.2e}".format(result[0][i]))
         else:
-            print(result)
-            print("length of result is " + str(len(result)))
-            print("length of outputList is " + str(len(self.outputList)))
+            # print(result)
+            # print("length of result is " + str(len(result)))
+            # print("length of outputList is " + str(len(self.outputList)))
+            return
         ### Update Circuit image
         tp = '_'+tp if tp != None else ''
-        print(tp)
+        # print(tp)
         self.disp_circuit_img("./img/{0}{1}.png".format(self.__label, tp))
 
     def disp_circuit_img(self, img):
@@ -139,8 +140,8 @@ class IMpyPage(Gtk.Box):
                 Rs, Rl, f0, tp = inputVal
                 result, tp = matching.L_matching(float(Rs), float(Rl), float(f0), tp)
                 # type is a bit complicate for L matching
-                print(result)
-                print(tp)
+                # print(result)
+                # print(tp)
                 self.disp_result(result, tp=tp) 
                 Q, L, C = result
                 self.sim.L_sim(float(Rs), float(Rl), float(f0), float(L), float(C), tp)
@@ -168,9 +169,14 @@ class IMpyPage(Gtk.Box):
                 self.sim.update_figure()
             else:
                 pass
+        except matching.NegativeQ:
+            self.throw_warning("Invalid Input", "The Q can't be negative")
+        except matching.SqrtValueError:
+            self.throw_warning("Invalid Input", "Input for the sqrt() can't be negative")
         except ValueError as e: # there may be two kinds of exception here, empty input or string input
             print(e)
             self.throw_warning("Invalid Input", "The input should be numbers!")
+        
     
     def on_clear_button(self, button):
         for i in self.inputList:
