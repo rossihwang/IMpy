@@ -69,7 +69,7 @@ Instead of the instruction on the official website, I recommend to install the a
 
 Remember to choose GTK on this page.
 
-![installation1](/home/rossihwang/my_git/IMpy/img/installation1.png)
+![installation1](./img/installation1.png)
 
 
 
@@ -130,13 +130,13 @@ python IMpy.py
 
 Screen shot in Ubuntu 16.04 LTS
 
-![IMpy_screenshot](/home/rossihwang/my_git/IMpy/img/IMpy_screenshot.png)
+![IMpy_screenshot](./img/IMpy_screenshot.png)
 
 
 
 Screen shot in Windows 10
 
-![IMpy_screenshot_win](/home/rossihwang/my_git/IMpy/img/IMpy_screenshot_win.png)
+![IMpy_screenshot_win](./img/IMpy_screenshot_win.png)
 
 
 
