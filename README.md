@@ -142,9 +142,15 @@ Screen shot in Windows 10
 
 ## 5. How to use
 
+![IMpy_htu](./img/IMpy_htu.png)
 
+* Area 1, you can choose four types of  matching network. there is no "Shunt L" or "Serial L", because the software will choose for you according to Rs and Rl input value.
+* Area 2, you can input the parameters, then click the confirm button to calculate.
+* Area 3, this area will give out the result after calculation.
+* Area 4, after calculation the software will simulate the input impedance and give out the result in this area.
+* Area 5, the specific circuit will be shown here, the parameters of the components you can find in area 3.
 
-
+ 
 
 ## 6. Useful Resources
 
